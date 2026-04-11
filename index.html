@@ -3,32 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Formatter Tool</title>
+    <title>Professional JSON Formatter & Validator</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        textarea { width: 100%; height: 300px; }
-        button { margin-top: 10px; }
-        pre { background: #f0f0f0; padding: 10px; border-radius: 5px; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #f9f9f9; color: #333; }
+        .container { max-width: 900px; margin: 20px auto; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Ad Placeholders */
+        .ad-top { width: 100%; height: 90px; background: #eee; margin-bottom: 20px; text-align: center; line-height: 90px; color: #999; border: 1px dashed #ccc; }
+        .ad-sidebar { float: right; width: 160px; height: 600px; background: #eee; margin-left: 20px; text-align: center; padding-top: 200px; color: #999; border: 1px dashed #ccc; }
+
+        h1 { color: #2c3e50; }
+        textarea { width: 100%; height: 250px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace; box-sizing: border-box; }
+        .btn-row { margin: 15px 0; }
+        button { padding: 12px 25px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #2980b9; }
+        
+        #status { font-weight: bold; margin-bottom: 10px; display: block; }
+        pre { background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; min-height: 100px; }
+        
+        /* SEO Content Section */
+        .content-section { margin-top: 50px; line-height: 1.6; color: #555; border-top: 1px solid #eee; padding-top: 20px; }
+        @media (max-width: 700px) { .ad-sidebar { display: none; } }
     </style>
 </head>
 <body>
-    <h1>JSON Formatter Tool</h1>
-    <textarea id="jsonInput" placeholder="Paste your JSON here..."></textarea>
-    <button onclick="formatJSON()">Format JSON</button>
-    <h2>Formatted JSON:</h2>
-    <pre id="formattedOutput"></pre>
 
-    <script>
-        function formatJSON() {
-            const input = document.getElementById('jsonInput').value;
+<div class="container">
+    <div class="ad-top">--- TOP BANNER AD CODE HERE ---</div>
+
+    <div class="ad-sidebar">--- SIDEBAR AD HERE ---</div>
+
+    <h1>JSON Formatter & Validator</h1>
+    <p>Paste your JSON below to beautify and validate it instantly.</p>
+
+    <textarea id="jsonInput" placeholder='{"name":"John", "age":30, "city":"Tunis"}'></textarea>
+    
+    <div class="btn-row">
+        <button id="formatBtn" onclick="processJSON()">Format JSON Now</button>
+    </div>
+
+    <span id="status"></span>
+    <h2>Formatted Result:</h2>
+    <pre id="formattedOutput">// Result will appear here...</pre>
+
+    <div class="content-section">
+        <h3>What is JSON?</h3>
+        <p>JSON (JavaScript Object Notation) is a lightweight data-interchange format. It is easy for humans to read and write and easy for machines to parse and generate. However, when JSON is minified for speed, it becomes impossible to read. Our tool Indents your code so you can debug it easily.</p>
+        
+        <h3>Why use our JSON Formatter?</h3>
+        <p>1. <strong>Privacy:</strong> We use client-side JavaScript. Your data never leaves your computer.<br>
+        2. <strong>Speed:</strong> Instant formatting with clear error messages.<br>
+        3. <strong>Free:</strong> Always free for developers worldwide.</p>
+    </div>
+</div>
+
+<script>
+    function processJSON() {
+        const btn = document.getElementById('formatBtn');
+        const status = document.getElementById('status');
+        const output = document.getElementById('formattedOutput');
+        const input = document.getElementById('jsonInput').value;
+
+        if(!input) return;
+
+        // Start "Processing" animation to increase dwell time
+        btn.disabled = true;
+        status.innerText = "Validating and Formatting...";
+        status.style.color = "orange";
+        output.textContent = "Loading...";
+
+        // The "Wait Hack" - 1.5 seconds delay
+        setTimeout(() => {
             try {
                 const json = JSON.parse(input);
                 const formatted = JSON.stringify(json, null, 4);
-                document.getElementById('formattedOutput').textContent = formatted;
+                output.textContent = formatted;
+                status.innerText = "Success! JSON is Valid.";
+                status.style.color = "green";
             } catch (e) {
-                document.getElementById('formattedOutput').textContent = 'Invalid JSON: ' + e.message;
+                output.textContent = "Error: " + e.message;
+                status.innerText = "Invalid JSON Detected.";
+                status.style.color = "red";
             }
-        }
-    </script>
+            btn.disabled = false;
+        }, 1500); 
+    }
+</script>
+
 </body>
 </html>
