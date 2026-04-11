@@ -131,16 +131,17 @@
         if(!val) return;
         
         out.style.color = "#8b949e";
-        out.innerText = "Processing safely...";
+        out.textContent = "Processing safely..."; // Changed to textContent
         
-        // Artificial delay to increase ad impression time
         setTimeout(() => {
             try {
                 const res = JSON.parse(val);
-                out.innerText = JSON.stringify(res, null, 4);
+                // JSON.stringify(res, null, 4) creates the spaces. 
+                // textContent ensures the browser actually shows them.
+                out.textContent = JSON.stringify(res, null, 4); 
                 out.style.color = "var(--success)";
             } catch (e) {
-                out.innerText = "Error: " + e.message;
+                out.textContent = "Error: " + e.message;
                 out.style.color = "#f85149";
             }
         }, 800);
