@@ -22,24 +22,24 @@
 
         /* THE SIDE-BY-SIDE LAYOUT */
         .wrapper { 
-            display: flex; /* This creates the horizontal row */
+            display: flex; 
             gap: 20px; 
             padding: 20px 5%; 
             flex: 1; 
         }
 
-        /* Tool takes up all remaining space */
         .tool-area { flex: 1; display: flex; flex-direction: column; gap: 20px; }
 
-        /* AD SIDEBAR: Fixed width on desktop */
+        /* AD SIDEBAR */
         .ad-sidebar { 
             width: 300px; 
+            min-height: 600px;
             background: var(--card); 
             border-radius: 12px; 
             border: 1px dashed #484f58;
             display: flex; align-items: center; justify-content: center;
-            color: #484f58; font-size: 0.8rem; height: 600px;
-            position: sticky; top: 20px; /* Stays in view while scrolling */
+            color: #484f58; font-size: 0.8rem;
+            position: sticky; top: 20px;
         }
 
         /* Editor Styling */
@@ -54,22 +54,34 @@
 
         .output-panel { 
             background: #010409; padding: 20px; min-height: 150px; 
-            font-family: 'Fira Code', monospace; color: var(--success); 
             border-top: 1px solid var(--border); position: relative;
+            overflow-x: auto;
         }
 
-        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
-        button.sec { background: #30363d; color: var(--text); }
-        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; }
+        /* Monospace Fix for the "Staircase" look */
+        #out {
+            font-family: 'Fira Code', 'Source Code Pro', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--success);
+            white-space: pre; /* Keeps indentation */
+            tab-size: 4;
+            margin: 0;
+        }
 
-        /* RESPONSIVE: Stack on mobile */
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.sec { background: #30363d; color: var(--text); }
+        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; z-index: 10; }
+
+        /* Responsive */
         @media (max-width: 1024px) {
             .wrapper { flex-direction: column; }
-            .ad-sidebar { width: 100%; height: 250px; order: 2; position: static; }
+            .ad-sidebar { width: 100%; height: 250px; min-height: 250px; order: 2; position: static; }
             .tool-area { order: 1; }
         }
 
-        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; }
+        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; line-height: 1.6; }
     </style>
 </head>
 <body>
@@ -83,23 +95,23 @@
         <div class="editor-box">
             <div class="toolbar">
                 <button onclick="run()">Beautify</button>
-                <button class="sec" onclick="copy()">Copy</button>
-                <button class="sec" onclick="location.reload()">Clear</button>
+                <button class="sec" onclick="copy()">Copy Code</button>
+                <button class="sec" onclick="clearAll()">Clear</button>
             </div>
             <textarea id="in" placeholder="Paste messy JSON here..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="out">// Formatted output...</div>
+                <pre id="out">// Formatted output will appear here...</pre>
             </div>
         </div>
         
-        <div style="width:100%; height:90px; border:1px dashed #484f58; display:flex; align-items:center; justify-content:center; color:#484f58; border-radius:8px;">
-            --- HORIZONTAL AD ZONE ---
+        <div style="width:100%; height:90px; border:1px dashed #484f58; display:flex; align-items:center; justify-content:center; color:#484f58; border-radius:8px; font-size: 0.8rem;">
+            --- HORIZONTAL AD ZONE (728x90) ---
         </div>
     </main>
 
     <aside class="ad-sidebar">
-        <div>
+        <div style="text-align: center;">
             ADVERTISEMENT<br>
             <small>(300x600 Skyscraper)</small>
             </div>
@@ -108,7 +120,8 @@
 
 <footer>
     <h3>Why use JSON Magic?</h3>
-    <p>We provide a safe, client-side experience for Tunisian developers. Your code never hits our servers—it's processed instantly in your browser.</p>
+    <p>We provide a safe, client-side experience for developers. Your code never hits our servers—it's processed instantly in your browser. This makes it ideal for formatting data containing API keys or configuration settings without security risks.</p>
+    <p style="opacity: 0.6; font-size: 0.8rem;">&copy; 2026 Developer Utility Tools. Built for speed and privacy.</p>
 </footer>
 
 <script>
@@ -118,8 +131,9 @@
         if(!val) return;
         
         out.style.color = "#8b949e";
-        out.innerText = "Processing...";
+        out.innerText = "Processing safely...";
         
+        // Artificial delay to increase ad impression time
         setTimeout(() => {
             try {
                 const res = JSON.parse(val);
@@ -134,11 +148,22 @@
 
     function copy() {
         const txt = document.getElementById('out').innerText;
-        if(txt.includes("//") || txt.includes("Error")) return;
+        // Don't copy placeholder or error messages
+        if(txt.startsWith("//") || txt.startsWith("Error")) return;
+        
         navigator.clipboard.writeText(txt).then(() => {
-            document.getElementById('t').style.display = "block";
-            setTimeout(() => { document.getElementById('t').style.display = "none"; }, 2000);
+            const toast = document.getElementById('t');
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 2000);
         });
+    }
+
+    function clearAll() {
+        document.getElementById('in').value = "";
+        const out = document.getElementById('out');
+        out.innerText = "// Formatted output will appear here...";
+        out.style.color = "var(--success)";
+        out.style.opacity = "0.5";
     }
 </script>
 
