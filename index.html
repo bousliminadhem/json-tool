@@ -3,140 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | Professional Formatter & Validator</title>
+    <title>JSON Magic | Pro Developer Tool</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --accent: #58a6ff;
-            --text: #c9d1d9;
-            --success: #3fb950;
-            --error: #f85149;
+            --bg: #0d1117; --card: #161b22; --accent: #58a6ff;
+            --text: #c9d1d9; --success: #3fb950; --border: #30363d;
         }
 
         body { 
-            font-family: 'Inter', sans-serif; 
-            margin: 0; 
-            background: var(--bg-color); 
-            color: var(--text);
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--text);
+            display: flex; flex-direction: column; min-height: 100vh;
         }
 
-        .header { background: var(--card-bg); padding: 15px 5%; border-bottom: 1px solid #30363d; display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-weight: 600; color: var(--accent); font-size: 1.2rem; }
+        /* Header */
+        .nav { background: var(--card); padding: 1rem 5%; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--accent); font-weight: 600; font-size: 1.2rem; text-decoration: none; }
 
-        .main-layout { display: grid; grid-template-columns: 1fr 300px; gap: 20px; padding: 20px 5%; flex: 1; }
+        /* THE SIDE-BY-SIDE LAYOUT */
+        .wrapper { 
+            display: flex; /* This creates the horizontal row */
+            gap: 20px; 
+            padding: 20px 5%; 
+            flex: 1; 
+        }
 
-        .editor-container { background: var(--card-bg); border-radius: 12px; border: 1px solid #30363d; overflow: hidden; display: flex; flex-direction: column; }
-        
-        .toolbar { background: #21262d; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid #30363d; }
+        /* Tool takes up all remaining space */
+        .tool-area { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        /* AD SIDEBAR: Fixed width on desktop */
+        .ad-sidebar { 
+            width: 300px; 
+            background: var(--card); 
+            border-radius: 12px; 
+            border: 1px dashed #484f58;
+            display: flex; align-items: center; justify-content: center;
+            color: #484f58; font-size: 0.8rem; height: 600px;
+            position: sticky; top: 20px; /* Stays in view while scrolling */
+        }
+
+        /* Editor Styling */
+        .editor-box { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .toolbar { background: #21262d; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid var(--border); }
         
         textarea { 
-            width: 100%; height: 300px; background: transparent; color: #8b949e; 
+            width: 100%; height: 350px; background: transparent; color: #8b949e; 
             border: none; padding: 15px; font-family: 'Fira Code', monospace; 
             font-size: 14px; outline: none; resize: vertical; box-sizing: border-box;
         }
 
-        .output-box { 
-            background: #010409; padding: 15px; min-height: 200px; 
-            font-family: 'Fira Code', monospace; white-space: pre-wrap; 
-            color: var(--success); border-top: 1px solid #30363d; position: relative;
+        .output-panel { 
+            background: #010409; padding: 20px; min-height: 150px; 
+            font-family: 'Fira Code', monospace; color: var(--success); 
+            border-top: 1px solid var(--border); position: relative;
         }
 
-        button { 
-            background: var(--accent); color: white; border: none; padding: 8px 16px; 
-            border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s;
+        button { background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button.sec { background: #30363d; color: var(--text); }
+        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; }
+
+        /* RESPONSIVE: Stack on mobile */
+        @media (max-width: 1024px) {
+            .wrapper { flex-direction: column; }
+            .ad-sidebar { width: 100%; height: 250px; order: 2; position: static; }
+            .tool-area { order: 1; }
         }
-        button:hover { filter: brightness(1.1); }
-        button.secondary { background: #30363d; color: var(--text); }
 
-        /* Ad Slots */
-        .ad-sidebar { background: #21262d; border-radius: 12px; border: 1px dashed #484f58; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 0.8rem; color: #484f58; }
-        .ad-top-float { width: 100%; height: 50px; background: #21262d; text-align: center; line-height: 50px; margin-bottom: 15px; border-radius: 8px; border: 1px dashed #484f58; }
-
-        .copy-toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 5px 10px; border-radius: 4px; font-size: 0.7rem; display: none; }
-
-        footer { padding: 40px 5%; background: var(--card-bg); border-top: 1px solid #30363d; margin-top: 20px; font-size: 0.9rem; line-height: 1.6; }
-        @media (max-width: 900px) { .main-layout { grid-template-columns: 1fr; } .ad-sidebar { display: none; } }
+        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; }
     </style>
 </head>
 <body>
 
-<div class="header">
-    <div class="logo">JSON MAGIC ✨</div>
-    <div style="font-size: 0.8rem; opacity: 0.7;">Free Developer Tools v2026</div>
+<div class="nav">
+    <a href="#" class="logo">JSON MAGIC ✨</a>
 </div>
 
-<div class="main-layout">
-    <div class="content-area">
-        <div class="ad-top-float">--- TOP HORIZONTAL AD HERE ---</div>
-        
-        <div class="editor-container">
+<div class="wrapper">
+    <main class="tool-area">
+        <div class="editor-box">
             <div class="toolbar">
-                <button onclick="beautify()">Format JSON</button>
-                <button class="secondary" onclick="copyToClipboard()" id="copyBtn">Copy Code</button>
-                <button class="secondary" onclick="clearAll()">Clear</button>
+                <button onclick="run()">Beautify</button>
+                <button class="sec" onclick="copy()">Copy</button>
+                <button class="sec" onclick="location.reload()">Clear</button>
             </div>
-            <textarea id="jsonInput" placeholder="Paste your minified JSON here..."></textarea>
-            <div class="output-box" id="output">
-                <div class="copy-toast" id="toast">Copied!</div>
-                <span id="displayText">// Formatted output will appear here...</span>
+            <textarea id="in" placeholder="Paste messy JSON here..."></textarea>
+            <div class="output-panel">
+                <div class="toast" id="t">Copied!</div>
+                <div id="out">// Formatted output...</div>
             </div>
         </div>
-    </div>
+        
+        <div style="width:100%; height:90px; border:1px dashed #484f58; display:flex; align-items:center; justify-content:center; color:#484f58; border-radius:8px;">
+            --- HORIZONTAL AD ZONE ---
+        </div>
+    </main>
 
-    <div class="ad-sidebar">
-        --- VERTICAL AD (SKYCRAPER) HERE ---<br>300 x 600
-    </div>
+    <aside class="ad-sidebar">
+        <div>
+            ADVERTISEMENT<br>
+            <small>(300x600 Skyscraper)</small>
+            </div>
+    </aside>
 </div>
 
 <footer>
-    <h2 style="color: var(--accent)">Professional JSON Formatter & Validator</h2>
-    <p>JSON Magic is a lightweight, client-side utility designed for software engineers. We prioritize privacy; your data is never uploaded to a server. Our beautifier supports standard JSON, nested objects, and arrays.</p>
+    <h3>Why use JSON Magic?</h3>
+    <p>We provide a safe, client-side experience for Tunisian developers. Your code never hits our servers—it's processed instantly in your browser.</p>
 </footer>
 
 <script>
-    const input = document.getElementById('jsonInput');
-    const output = document.getElementById('displayText');
-    const toast = document.getElementById('toast');
-
-    async function beautify() {
-        if(!input.value) return;
-
-        // Visual Feedback for Ad engagement
-        output.style.color = "var(--text)";
-        output.innerText = "Processing safely in-browser...";
+    function run() {
+        const val = document.getElementById('in').value;
+        const out = document.getElementById('out');
+        if(!val) return;
         
-        // Artificial delay (1s) to boost ad time
+        out.style.color = "#8b949e";
+        out.innerText = "Processing...";
+        
         setTimeout(() => {
             try {
-                const parsed = JSON.parse(input.value);
-                output.innerText = JSON.stringify(parsed, null, 4);
-                output.style.color = "var(--success)";
+                const res = JSON.parse(val);
+                out.innerText = JSON.stringify(res, null, 4);
+                out.style.color = "var(--success)";
             } catch (e) {
-                output.innerText = "Error: " + e.message;
-                output.style.color = "var(--error)";
+                out.innerText = "Error: " + e.message;
+                out.style.color = "#f85149";
             }
-        }, 1000);
+        }, 800);
     }
 
-    function copyToClipboard() {
-        const text = output.innerText;
-        if(text.startsWith("//") || text.startsWith("Error")) return;
-
-        navigator.clipboard.writeText(text).then(() => {
-            toast.style.display = "block";
-            setTimeout(() => { toast.style.display = "none"; }, 2000);
+    function copy() {
+        const txt = document.getElementById('out').innerText;
+        if(txt.includes("//") || txt.includes("Error")) return;
+        navigator.clipboard.writeText(txt).then(() => {
+            document.getElementById('t').style.display = "block";
+            setTimeout(() => { document.getElementById('t').style.display = "none"; }, 2000);
         });
-    }
-
-    function clearAll() {
-        input.value = "";
-        output.innerText = "// Formatted output will appear here...";
-        output.style.color = "var(--text)";
     }
 </script>
 
