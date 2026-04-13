@@ -21,16 +21,8 @@
         .nav { background: var(--card); padding: 1rem 5%; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
         .logo { color: var(--accent); font-weight: 600; font-size: 1.2rem; text-decoration: none; }
 
-        .wrapper { 
-            display: flex; gap: 20px; padding: 20px 5%; flex: 1; 
-        }
-
+        .wrapper { display: flex; gap: 20px; padding: 20px 5%; flex: 1; }
         .tool-area { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-
-        .ad-sidebar { 
-            width: 300px; min-height: 600px; background: var(--card); border-radius: 12px; border: 1px dashed #484f58;
-            display: flex; align-items: center; justify-content: center; color: #484f58; font-size: 0.8rem; position: sticky; top: 20px;
-        }
 
         .editor-box { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
         .toolbar { background: #21262d; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
@@ -42,7 +34,6 @@
         }
 
         .output-panel { background: #010409; padding: 20px; min-height: 200px; border-top: 1px solid var(--border); position: relative; overflow-x: auto; }
-
         #out { font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.5; color: var(--success); white-space: pre; tab-size: 4; margin: 0; }
 
         button { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
@@ -50,9 +41,9 @@
         button.sec { background: #30363d; color: var(--text); }
         
         .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; }
-        .repair-note { font-size: 0.75rem; color: var(--warning); margin-bottom: 10px; display: none; padding: 8px; background: rgba(210, 153, 34, 0.1); border-radius: 4px; }
+        .repair-note { font-size: 0.75rem; color: var(--warning); margin-bottom: 10px; display: none; padding: 10px; background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.2); border-radius: 6px; }
 
-        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; line-height: 1.6; }
+        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; line-height: 1.6; opacity: 0.8; }
     </style>
 </head>
 <body>
@@ -61,51 +52,64 @@
 
 <div class="wrapper">
     <main class="tool-area">
-        <div class="editor-box" id="main-editor">
+        <div class="editor-box">
             <div class="toolbar">
                 <button onclick="formatJSON(true)">Beautify</button>
                 <button class="sec" onclick="formatJSON(false)">Minify</button>
-                <button class="sec" onclick="loadSample()">Sample Error</button>
+                <button class="sec" onclick="loadSample()">Load Broken Sample</button>
                 <button class="sec" onclick="copyCode()">Copy Code</button>
                 <button class="sec" onclick="clearAll()">Clear</button>
             </div>
-            <textarea id="in" placeholder="Paste messy or broken JSON here..."></textarea>
+            <textarea id="in" placeholder="Paste very broken JSON here (missing colons, quotes, braces)..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">⚠️ Auto-repaired structure (Missing colons or quotes fixed)</div>
-                <pre id="out">// Formatted output will appear here...</pre>
+                <div id="repair-msg" class="repair-note">🛠️ <b>Self-Healed:</b> Structural errors (missing colons, quotes, or braces) were fixed.</div>
+                <pre id="out">// Output will appear here...</pre>
             </div>
         </div>
     </main>
-
-    <aside class="ad-sidebar">
-        <div>ADVERTISEMENT</div>
-    </aside>
 </div>
+
+<footer>
+    <h3>Smart Self-Healing Mode</h3>
+    <p>This version of JSON Magic uses heuristic repair. It attempts to wrap objects, fix unquoted keys, and bridge missing colons between properties and values entirely client-side.</p>
+</footer>
 
 <script>
     let debounceTimer;
 
-    function superRepair(str) {
-        let fixed = str.trim();
-        
-        // 1. Fix single quotes to double quotes
-        fixed = fixed.replace(/'/g, '"');
+    function superHealer(str) {
+        let s = str.trim();
 
-        // 2. Fix missing colons between keys and values
-        // Looks for "key" "value" and adds the :
-        fixed = fixed.replace(/("[\w]+")\s*("[\w]+"|\d+|true|false|null|{|\[)/g, '$1: $2');
+        // 1. Convert single quotes to double quotes
+        s = s.replace(/'/g, '"');
 
-        // 3. Fix missing quotes around keys (if simple alphanumeric)
-        fixed = fixed.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+        // 2. Wrap the whole thing in {} if it doesn't start/end with braces or brackets
+        if (!s.startsWith('{') && !s.startsWith('[')) {
+            s = '{' + s + '}';
+        }
 
-        // 4. Remove trailing commas
-        fixed = fixed.replace(/,\s*([\]}])/g, '$1');
+        // 3. Fix missing quotes around keys (handles simple alphanumeric keys)
+        // Look for keys that aren't quoted: { key: "value" } -> { "key": "value" }
+        s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
-        // 5. Clean up bad control characters
-        fixed = fixed.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
+        // 4. Fix missing COLONS
+        // Look for "key" "value" or "key" 123 and insert the colon
+        // This regex looks for a closing quote followed by whitespace and then a quote, digit, or boolean
+        s = s.replace(/(")\s+("|\d|true|false|null|{|\[)/g, '$1: $2');
 
-        return fixed;
+        // 5. Fix unquoted values that should be strings (heuristic)
+        // If a value is just text without quotes (not true/false/null/number), wrap it
+        // This is a bit risky but helpful for very messy logs
+        // s = s.replace(/:\s*([a-zA-Z]{2,})(?!\s*[:])/g, ': "$1"'); 
+
+        // 6. Remove trailing commas before closing braces/brackets
+        s = s.replace(/,\s*([\]}])/g, '$1');
+
+        // 7. Escape literal newlines inside what will become strings
+        s = s.replace(/\n(?!(?:[^"]*"[^"]*")*[^"]*$)/g, "\\n");
+
+        return s;
     }
 
     function formatJSON(beautify = true) {
@@ -123,41 +127,45 @@
                 let parsed = JSON.parse(input);
                 render(parsed, beautify);
             } catch (e) {
-                // If fails, run the Super Repair
+                // If standard fails, run the Super Healer
                 try {
-                    let repaired = superRepair(input);
-                    let parsed = JSON.parse(repaired);
+                    let healed = superHealer(input);
+                    let parsed = JSON.parse(healed);
                     repairMsg.style.display = "block";
                     render(parsed, beautify);
                 } catch (finalError) {
-                    out.textContent = "Error: " + finalError.message;
+                    out.textContent = "Could not repair JSON automatically.\nError: " + finalError.message;
                     out.style.color = "var(--error)";
                 }
             }
-        }, 200);
+        }, 150);
     }
 
     function render(data, beautify) {
         const out = document.getElementById('out');
         out.textContent = beautify ? JSON.stringify(data, null, 4) : JSON.stringify(data);
         out.style.color = "var(--success)";
-        out.style.opacity = "1";
     }
 
     function loadSample() {
-        // Sample with missing colon AND bad quotes
-        const broken = `{
-    "name" "JSON Magic"
-    'version' 2.1,
-    "feature": "Self Healing"
-}`;
-        document.getElementById('in').value = broken;
+        // This is extremely invalid JSON
+        const trash = `
+        name "JSON Magic"
+        version 3.0
+        'status' 'online'
+        features [
+            "fast"
+            "secure"
+        ]
+        note "No braces, no colons, single quotes"
+        `;
+        document.getElementById('in').value = trash;
         formatJSON(true);
     }
 
     function copyCode() {
         const txt = document.getElementById('out').textContent;
-        if(txt.includes("//") || txt.startsWith("Error")) return;
+        if(txt.includes("//") || txt.startsWith("Could not")) return;
         navigator.clipboard.writeText(txt).then(() => {
             const toast = document.getElementById('t');
             toast.style.display = "block";
@@ -167,7 +175,7 @@
 
     function clearAll() {
         document.getElementById('in').value = "";
-        document.getElementById('out').textContent = "// Formatted output will appear here...";
+        document.getElementById('out').textContent = "// Output will appear here...";
         document.getElementById('repair-msg').style.display = "none";
     }
 </script>
