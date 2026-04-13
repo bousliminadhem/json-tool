@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | Ultra-Heal V3</title>
+    <title>JSON Magic | God-Mode Repair</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -44,7 +44,7 @@
             <textarea id="in" placeholder="Paste your broken JSON here..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">🛠️ <b>Deep-Heal Active:</b> Unicode artifacts scrubbed and structure repaired.</div>
+                <div id="repair-msg" class="repair-note">🛠️ <b>God-Mode Repair:</b> Fixed Unicode whitespace, missing colons, and structural gaps.</div>
                 <pre id="out">// Output will appear here...</pre>
             </div>
         </div>
@@ -55,24 +55,26 @@
     let debounceTimer;
 
     function ultraHealer(str) {
-        // 1. Unicode Sanitizer: Scrub non-breaking spaces and other invisible artifacts
+        // 1. DEEP SCRUB: Replace ALL non-standard whitespace (including NBSP \xA0) with standard space
+        // This fixes the "Expected double-quoted property name" error caused by invisible chars
         let s = str.replace(/[\u00A0\u1680​\u180e\u2000-\u200a\u202f\u205f\u3000]/g, " ");
-        s = s.trim();
 
-        // 2. Normalize Quotes
+        // 2. Normalize single quotes to double
         s = s.replace(/'/g, '"');
 
-        // 3. Structural Wrapping
+        // 3. Ensure outer braces if missing
+        s = s.trim();
         if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
 
-        // 4. Missing Colons: Regex lookbehind ensures we don't fix what isn't broken
-        // We look for " followed by space followed by another starting char
-        s = s.replace(/(")\s*(?<!:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
+        // 4. THE COLON FIX: Bridge keys and values
+        // Finds a closing quote followed by any space, then the start of a value, 
+        // ensuring no colon already exists in between.
+        s = s.replace(/(")\s*(?!\s*:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
 
-        // 5. Fix Unquoted Keys
+        // 5. FIX UNQUOTED KEYS: Wrap naked alphanumeric keys
         s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
-        // 6. Final cleanup of trailing commas
+        // 6. TRAILING COMMAS: Cleanup
         s = s.replace(/,\s*([\]}])/g, '$1');
 
         return s;
@@ -89,12 +91,12 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             try {
-                // Try native first
+                // Try standard first
                 const parsed = JSON.parse(inputVal);
                 render(parsed, beautify);
             } catch (e) {
                 try {
-                    // Try the Healer
+                    // Apply God-Mode Repair
                     const healed = ultraHealer(inputVal);
                     const parsed = JSON.parse(healed);
                     repairMsg.style.display = "block";
