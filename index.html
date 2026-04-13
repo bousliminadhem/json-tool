@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | Ultra-Heal Edition</title>
+    <title>JSON Magic | Ultra-Heal V3</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -44,7 +44,7 @@
             <textarea id="in" placeholder="Paste your broken JSON here..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">🛠️ <b>Ultra-Heal Active:</b> Structural fixes applied (missing colons/quotes/braces).</div>
+                <div id="repair-msg" class="repair-note">🛠️ <b>Deep-Heal Active:</b> Unicode artifacts scrubbed and structure repaired.</div>
                 <pre id="out">// Output will appear here...</pre>
             </div>
         </div>
@@ -55,51 +55,52 @@
     let debounceTimer;
 
     function ultraHealer(str) {
-        let s = str.trim();
+        // 1. Unicode Sanitizer: Scrub non-breaking spaces and other invisible artifacts
+        let s = str.replace(/[\u00A0\u1680​\u180e\u2000-\u200a\u202f\u205f\u3000]/g, " ");
+        s = s.trim();
 
-        // 1. Basic cleaning: convert single quotes to double quotes
+        // 2. Normalize Quotes
         s = s.replace(/'/g, '"');
 
-        // 2. Ensure outer braces
+        // 3. Structural Wrapping
         if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
 
-        // 3. Fix missing colons: Find a closing quote followed by any amount of whitespace 
-        // then a value start (", digit, -, true, false, null, {, [)
-        // The negative lookbehind (?<!:) ensures we don't double up colons
+        // 4. Missing Colons: Regex lookbehind ensures we don't fix what isn't broken
+        // We look for " followed by space followed by another starting char
         s = s.replace(/(")\s*(?<!:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
 
-        // 4. Fix unquoted keys
+        // 5. Fix Unquoted Keys
         s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
-        // 5. Cleanup trailing commas
+        // 6. Final cleanup of trailing commas
         s = s.replace(/,\s*([\]}])/g, '$1');
 
-        // 6. Final safety: Clean literal tabs or newlines that break strings
-        // (Only handles simple cases to avoid breaking complex JSON)
         return s;
     }
 
     function formatJSON(beautify = true) {
-        let input = document.getElementById('in').value;
+        const inputVal = document.getElementById('in').value;
         const out = document.getElementById('out');
         const repairMsg = document.getElementById('repair-msg');
         
-        if(!input.trim()) return;
+        if(!inputVal.trim()) return;
         repairMsg.style.display = "none";
 
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             try {
-                let parsed = JSON.parse(input);
+                // Try native first
+                const parsed = JSON.parse(inputVal);
                 render(parsed, beautify);
             } catch (e) {
                 try {
-                    let healed = ultraHealer(input);
-                    let parsed = JSON.parse(healed);
+                    // Try the Healer
+                    const healed = ultraHealer(inputVal);
+                    const parsed = JSON.parse(healed);
                     repairMsg.style.display = "block";
                     render(parsed, beautify);
                 } catch (finalError) {
-                    out.textContent = "Unrepairable: " + finalError.message;
+                    out.textContent = "Unrepairable structural error: " + finalError.message;
                     out.style.color = "var(--error)";
                 }
             }
