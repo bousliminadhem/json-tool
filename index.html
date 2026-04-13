@@ -1,133 +1,99 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | Absolute Repair</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0d1117; --card: #161b22; --accent: #58a6ff;
-            --text: #c9d1d9; --success: #3fb950; --border: #30363d;
-            --error: #f85149; --warning: #d29922;
-        }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; min-height: 100vh; }
-        .nav { background: var(--card); padding: 1rem 5%; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        .logo { color: var(--accent); font-weight: 600; font-size: 1.2rem; text-decoration: none; }
-        .wrapper { display: flex; gap: 20px; padding: 20px 5%; flex: 1; }
-        .tool-area { flex: 1; display: flex; flex-direction: column; gap: 20px; }
-        .editor-box { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
-        .toolbar { background: #21262d; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid var(--border); }
-        textarea { width: 100%; height: 350px; background: transparent; color: #8b949e; border: none; padding: 15px; font-family: 'Fira Code', monospace; font-size: 14px; outline: none; resize: vertical; box-sizing: border-box; }
-        .output-panel { background: #010409; padding: 20px; min-height: 200px; border-top: 1px solid var(--border); position: relative; overflow-x: auto; }
-        #out { font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.5; color: var(--success); white-space: pre; tab-size: 4; margin: 0; }
-        button { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        button:hover { filter: brightness(1.1); }
-        button.sec { background: #30363d; color: var(--text); }
-        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; }
-        .repair-note { font-size: 0.75rem; color: var(--warning); margin-bottom: 10px; display: none; padding: 10px; background: rgba(210, 153, 34, 0.1); border: 1px solid rgba(210, 153, 34, 0.2); border-radius: 6px; }
-    </style>
-</head>
-<body>
+let debounceTimer;
 
-<div class="nav"><a href="#" class="logo">JSON MAGIC ✨</a></div>
+// 1. IMPROVED HEALER: Handles structural gaps and missing braces
+function absoluteHealer(str) {
+    let s = str.trim();
+    
+    // Byte Scrub & Quote Normalization
+    s = s.replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/g, " ");
+    s = s.replace(/'/g, '"');
 
-<div class="wrapper">
-    <main class="tool-area">
-        <div class="editor-box">
-            <div class="toolbar">
-                <button onclick="formatJSON(true)">Beautify</button>
-                <button class="sec" onclick="formatJSON(false)">Minify</button>
-                <button class="sec" onclick="copyCode()">Copy Code</button>
-                <button class="sec" onclick="clearAll()">Clear</button>
-            </div>
-            <textarea id="in" placeholder="Paste your broken JSON here..."></textarea>
-            <div class="output-panel">
-                <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">🛠️ <b>Absolute Repair:</b> Scrubbed invisible characters and bridged structural gaps.</div>
-                <pre id="out">// Output will appear here...</pre>
-            </div>
-        </div>
-    </main>
-</div>
+    // Key Quoting (Fixes unquoted keys)
+    s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
-<script>
-    let debounceTimer;
+    // Missing Colons: Fixes "key" "value" patterns
+    s = s.replace(/(")\s*(?!\s*:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
 
-    function absoluteHealer(str) {
-        // 1. BYTE SCRUB: Replace all variations of NBSP and other invisible artifacts.
-        // We use the hex range to ensure we catch \xA0 and other non-standard spaces.
-        let s = str.replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/g, " ");
+    // Missing Commas: Fixes "value" "key" patterns
+    s = s.replace(/("|\d|true|false|null|}|\])\s+(")/g, '$1, $2');
 
-        // 2. Quote Normalization
-        s = s.replace(/'/g, '"');
+    // Structural wrap
+    if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
 
-        // 3. Structural Integrity
-        s = s.trim();
-        if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
-
-        // 4. AGGRESSIVE COLON BRIDGE
-        // Look for any end-quote immediately followed by the start of a value
-        s = s.replace(/(")\s*(?!\s*:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
-
-        // 5. KEY QUOTING
-        s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
-
-        // 6. TRAILING COMMAS
-        s = s.replace(/,\s*([\]}])/g, '$1');
-
-        return s;
+    // Balance Braces: Crude but effective for truncated JSON
+    const openBraces = (s.match(/{/g) || []).length;
+    const closeBraces = (s.match(/}/g) || []).length;
+    if (openBraces > closeBraces) {
+        s += "}".repeat(openBraces - closeBraces);
     }
 
-    function formatJSON(beautify = true) {
-        const inputVal = document.getElementById('in').value;
-        const out = document.getElementById('out');
-        const repairMsg = document.getElementById('repair-msg');
-        
-        if(!inputVal.trim()) return;
-        repairMsg.style.display = "none";
+    // Clean up trailing commas
+    s = s.replace(/,\s*([\]}])/g, '$1');
 
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(() => {
+    return s;
+}
+
+// 2. ORGANIZE: Alphabetical sorting of keys
+function sortObject(obj) {
+    if (Array.isArray(obj)) return obj.map(sortObject);
+    if (obj === null || typeof obj !== 'object') return obj;
+
+    return Object.keys(obj).sort().reduce((acc, key) => {
+        acc[key] = sortObject(obj[key]);
+        return acc;
+    }, {});
+}
+
+function formatJSON(beautify = true) {
+    const inputVal = document.getElementById('in').value;
+    const out = document.getElementById('out');
+    const repairMsg = document.getElementById('repair-msg');
+    
+    if(!inputVal.trim()) return;
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+        try {
+            let processedData;
+            let wasRepaired = false;
+
             try {
-                // Try native
-                const parsed = JSON.parse(inputVal);
-                render(parsed, beautify);
+                // Try clean parse first
+                processedData = JSON.parse(inputVal);
             } catch (e) {
-                try {
-                    // Try the healer
-                    const healed = absoluteHealer(inputVal);
-                    const parsed = JSON.parse(healed);
-                    repairMsg.style.display = "block";
-                    render(parsed, beautify);
-                } catch (finalError) {
-                    out.textContent = "Unrepairable structural error: " + finalError.message;
-                    out.style.color = "var(--error)";
-                }
+                // Apply absolute repair
+                const healed = absoluteHealer(inputVal);
+                processedData = JSON.parse(healed);
+                wasRepaired = true;
             }
-        }, 150);
-    }
 
-    function render(data, beautify) {
-        const out = document.getElementById('out');
-        out.textContent = JSON.stringify(data, null, beautify ? 4 : 0);
-        out.style.color = "var(--success)";
-    }
+            // Organize/Sort
+            const organizedData = sortObject(processedData);
+            
+            repairMsg.style.display = wasRepaired ? "block" : "none";
+            render(organizedData, beautify);
 
-    function copyCode() {
-        const txt = document.getElementById('out').textContent;
-        navigator.clipboard.writeText(txt).then(() => {
-            const toast = document.getElementById('t');
-            toast.style.display = "block";
-            setTimeout(() => { toast.style.display = "none"; }, 2000);
+        } catch (finalError) {
+            out.innerHTML = `<span style="color:var(--error)">Unrepairable: ${finalError.message}</span>`;
+        }
+    }, 150);
+}
+
+function render(data, beautify) {
+    const out = document.getElementById('out');
+    const jsonString = JSON.stringify(data, null, beautify ? 4 : 0);
+    
+    // To show "updated parts", we'll highlight characters that didn't exist in original
+    // This is a simplified "Additions" highlighter
+    const original = document.getElementById('in').value;
+    
+    // Basic syntax highlighting for the output
+    const highlighted = jsonString
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/(".*?"|true|false|null|\d+)/g, (match) => {
+            // If the match doesn't exist in the original text, highlight it as a repair
+            return original.includes(match.replace(/"/g, '')) ? match : `<mark style="background: #23863644; color: #79c0ff; border-radius: 2px;">${match}</mark>`;
         });
-    }
 
-    function clearAll() {
-        document.getElementById('in').value = "";
-        document.getElementById('out').textContent = "// Output will appear here...";
-        document.getElementById('repair-msg').style.display = "none";
-    }
-</script>
-</body>
-</html>
+    out.innerHTML = highlighted;
+}
