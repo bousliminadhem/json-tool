@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | God-Mode Repair</title>
+    <title>JSON Magic | Iron-Clad Edition</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -44,7 +44,7 @@
             <textarea id="in" placeholder="Paste your broken JSON here..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">🛠️ <b>God-Mode Repair:</b> Fixed Unicode whitespace, missing colons, and structural gaps.</div>
+                <div id="repair-msg" class="repair-note">🛠️ <b>Iron-Clad Repair:</b> Forcibly normalized whitespace and repaired structural gaps.</div>
                 <pre id="out">// Output will appear here...</pre>
             </div>
         </div>
@@ -54,27 +54,26 @@
 <script>
     let debounceTimer;
 
-    function ultraHealer(str) {
-        // 1. DEEP SCRUB: Replace ALL non-standard whitespace (including NBSP \xA0) with standard space
-        // This fixes the "Expected double-quoted property name" error caused by invisible chars
-        let s = str.replace(/[\u00A0\u1680​\u180e\u2000-\u200a\u202f\u205f\u3000]/g, " ");
+    function ironCladHealer(str) {
+        // 1. FORCE NORMALIZE: Convert ALL whitespace variants (NBSP, Zero-Width, etc.) 
+        // to standard ASCII spaces before doing anything else.
+        let s = str.replace(/[\u00A0\u1680​\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/g, " ");
 
-        // 2. Normalize single quotes to double
+        // 2. Fix Quotes
         s = s.replace(/'/g, '"');
 
-        // 3. Ensure outer braces if missing
+        // 3. Ensure outer braces
         s = s.trim();
         if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
 
-        // 4. THE COLON FIX: Bridge keys and values
-        // Finds a closing quote followed by any space, then the start of a value, 
-        // ensuring no colon already exists in between.
+        // 4. COLON BRIDGE: Injects colons where they are missing between keys and values.
+        // This is now more aggressive and handles cases where they are smashed together.
         s = s.replace(/(")\s*(?!\s*:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
 
         // 5. FIX UNQUOTED KEYS: Wrap naked alphanumeric keys
         s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
-        // 6. TRAILING COMMAS: Cleanup
+        // 6. TRAILING COMMAS
         s = s.replace(/,\s*([\]}])/g, '$1');
 
         return s;
@@ -96,8 +95,8 @@
                 render(parsed, beautify);
             } catch (e) {
                 try {
-                    // Apply God-Mode Repair
-                    const healed = ultraHealer(inputVal);
+                    // Apply Iron-Clad Repair
+                    const healed = ironCladHealer(inputVal);
                     const parsed = JSON.parse(healed);
                     repairMsg.style.display = "block";
                     render(parsed, beautify);
