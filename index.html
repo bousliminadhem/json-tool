@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Magic | Iron-Clad Edition</title>
+    <title>JSON Magic | Absolute Repair</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -44,7 +44,7 @@
             <textarea id="in" placeholder="Paste your broken JSON here..."></textarea>
             <div class="output-panel">
                 <div class="toast" id="t">Copied!</div>
-                <div id="repair-msg" class="repair-note">🛠️ <b>Iron-Clad Repair:</b> Forcibly normalized whitespace and repaired structural gaps.</div>
+                <div id="repair-msg" class="repair-note">🛠️ <b>Absolute Repair:</b> Scrubbed invisible characters and bridged structural gaps.</div>
                 <pre id="out">// Output will appear here...</pre>
             </div>
         </div>
@@ -54,23 +54,23 @@
 <script>
     let debounceTimer;
 
-    function ironCladHealer(str) {
-        // 1. FORCE NORMALIZE: Convert ALL whitespace variants (NBSP, Zero-Width, etc.) 
-        // to standard ASCII spaces before doing anything else.
-        let s = str.replace(/[\u00A0\u1680​\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/g, " ");
+    function absoluteHealer(str) {
+        // 1. BYTE SCRUB: Replace all variations of NBSP and other invisible artifacts.
+        // We use the hex range to ensure we catch \xA0 and other non-standard spaces.
+        let s = str.replace(/[\u00A0\u1680\u180e\u2000-\u200a\u202f\u205f\u3000\ufeff]/g, " ");
 
-        // 2. Fix Quotes
+        // 2. Quote Normalization
         s = s.replace(/'/g, '"');
 
-        // 3. Ensure outer braces
+        // 3. Structural Integrity
         s = s.trim();
         if (!s.startsWith('{') && !s.startsWith('[')) s = '{' + s + '}';
 
-        // 4. COLON BRIDGE: Injects colons where they are missing between keys and values.
-        // This is now more aggressive and handles cases where they are smashed together.
+        // 4. AGGRESSIVE COLON BRIDGE
+        // Look for any end-quote immediately followed by the start of a value
         s = s.replace(/(")\s*(?!\s*:)\s*("|\d|-|true|false|null|{|\[)/g, '$1: $2');
 
-        // 5. FIX UNQUOTED KEYS: Wrap naked alphanumeric keys
+        // 5. KEY QUOTING
         s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)(\s*[:\s])/g, '$1"$2"$3');
 
         // 6. TRAILING COMMAS
@@ -90,13 +90,13 @@
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             try {
-                // Try standard first
+                // Try native
                 const parsed = JSON.parse(inputVal);
                 render(parsed, beautify);
             } catch (e) {
                 try {
-                    // Apply Iron-Clad Repair
-                    const healed = ironCladHealer(inputVal);
+                    // Try the healer
+                    const healed = absoluteHealer(inputVal);
                     const parsed = JSON.parse(healed);
                     repairMsg.style.display = "block";
                     render(parsed, beautify);
