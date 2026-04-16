@@ -1,51 +1,49 @@
 <script>
 let debounceTimer;
 
-// 🔥 1. ADVANCED HEALER (handles structural + syntax issues)
+// 1. HEALER: Handles structural + syntax issues
 function absoluteHealer(str) {
     let s = str.trim();
 
-    // Normalize spaces & quotes
+    // Normalize spaces, curly quotes, and control chars
     s = s.replace(/[\u00A0-\u3000\ufeff]/g, " ");
+    s = s.replace(/[\u201C\u201D]/g, '"'); // Smart quotes
     s = s.replace(/'/g, '"');
-
-    // Remove control chars
     s = s.replace(/[\x00-\x1F]+/g, "");
 
-    // Quote keys
+    // Quote unquoted keys
     s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)\s*:/g, '$1"$2":');
 
-    // Fix missing colons
-    s = s.replace(/(")\s+(?=")/g, '$1: ');
+    // Fix missing colons between key and value
+    s = s.replace(/(")\s+(?="|\d|true|false|null|\[|\{)/g, '$1: ');
 
     // Fix duplicate commas
     s = s.replace(/,+/g, ',');
 
-    // Fix missing commas between values
-    s = s.replace(/("|\d|true|false|null|\}|\])\s+(?=")/g, '$1, ');
+    // Fix missing commas between key-value pairs or array items
+    // Matches: value followed by start of next key/value without comma
+    s = s.replace(/("|\d|true|false|null|\}|\])\s+(?="|\d|true|false|null|\[|\{)/g, '$1, ');
 
-    // Remove trailing commas
+    // Remove trailing commas before closing braces
     s = s.replace(/,\s*([\]}])/g, '$1');
 
-    // --- STRUCTURE REPAIR (stack-based) ---
+    // --- STRUCTURE REPAIR ---
     let stack = [];
     let result = '';
 
     for (let i = 0; i < s.length; i++) {
         let char = s[i];
-
         if (char === '{' || char === '[') {
             stack.push(char);
             result += char;
-        } 
-        else if (char === '}' || char === ']') {
-            if (stack.length) {
+        } else if (char === '}' || char === ']') {
+            const expected = stack[stack.length - 1];
+            if ((char === '}' && expected === '{') || (char === ']' && expected === '[')) {
                 stack.pop();
                 result += char;
             }
-            // ignore extra closing brackets
-        } 
-        else {
+            // ignore mismatched or extra closing brackets
+        } else {
             result += char;
         }
     }
@@ -64,7 +62,7 @@ function absoluteHealer(str) {
     return result;
 }
 
-// 🔠 2. SORT OBJECT KEYS
+// 2. SORT OBJECT KEYS
 function sortObject(obj) {
     if (Array.isArray(obj)) return obj.map(sortObject);
     if (obj === null || typeof obj !== 'object') return obj;
@@ -75,65 +73,72 @@ function sortObject(obj) {
     }, {});
 }
 
-// ⚙️ 3. MAIN FORMAT FUNCTION
+// 3. MAIN FORMAT FUNCTION
 function formatJSON() {
-    const inputVal = document.getElementById('in').value;
+    const inputElement = document.getElementById('in');
     const out = document.getElementById('out');
     const repairMsg = document.getElementById('repair-msg');
-
-    if (!inputVal.trim()) return;
+    
+    if (!inputElement || !inputElement.value.trim()) return;
 
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
         try {
             let processedData;
             let wasRepaired = false;
+            const rawInput = inputElement.value;
 
             try {
-                // Try normal parse first
-                processedData = JSON.parse(inputVal);
+                processedData = JSON.parse(rawInput);
             } catch (e) {
-                // Apply repair
-                const healed = absoluteHealer(inputVal);
+                const healed = absoluteHealer(rawInput);
                 processedData = JSON.parse(healed);
                 wasRepaired = true;
             }
 
-            // Sort keys
             const organizedData = sortObject(processedData);
 
-            repairMsg.style.display = wasRepaired ? "block" : "none";
+            if (repairMsg) {
+                repairMsg.style.display = wasRepaired ? "block" : "none";
+            }
 
-            render(organizedData);
+            render(organizedData, wasRepaired);
 
         } catch (finalError) {
-            out.innerHTML = `<span style="color:var(--error)">
+            out.innerHTML = `<span style="color: #ff6b6b">
                 Unrepairable structural error: ${finalError.message}
             </span>`;
         }
-    }, 150);
+    }, 200);
 }
 
-// 🎨 4. RENDER WITH HIGHLIGHT + PERFECT INDENT
-function render(data) {
+// 4. RENDER WITH HIGHLIGHTING
+function render(data, wasRepaired) {
     const out = document.getElementById('out');
     const jsonString = JSON.stringify(data, null, 4);
 
-    const original = document.getElementById('in').value;
-
+    // Escape HTML and apply basic syntax highlighting
     const highlighted = jsonString
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
-        .replace(/(".*?"|\btrue\b|\bfalse\b|\bnull\b|\d+)/g, (match) => {
-            return original.includes(match.replace(/"/g, ''))
-                ? match
-                : `<mark style="background:#23863644;color:#79c0ff;border-radius:2px;">${match}</mark>`;
+        .replace(/(".*?"|true|false|null|\d+)/g, (match) => {
+            let cls = 'number';
+            if (/^"/.test(match)) cls = 'string';
+            if (/true|false/.test(match)) cls = 'boolean';
+            if (/null/.test(match)) cls = 'null';
+            
+            // Add a highlight style if it was repaired
+            const style = wasRepaired ? 'background:#23863622; color:#79c0ff;' : 'color:#79c0ff;';
+            return `<span style="${style}">${match}</span>`;
         });
 
-    out.innerHTML = highlighted;
+    out.innerHTML = `<pre style="margin:0; font-family:monospace;">${highlighted}</pre>`;
 }
 
-// ⌨️ OPTIONAL: AUTO FORMAT ON INPUT
-document.getElementById('in').addEventListener('input', formatJSON);
+// 5. EVENT LISTENER
+const inputArea = document.getElementById('in');
+if (inputArea) {
+    inputArea.addEventListener('input', formatJSON);
+}
 </script>
