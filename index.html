@@ -1,151 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON Magic | Pro Developer Tool</title>
+    <meta name="description" content="Secure, client-side JSON formatter and beautifier. Privacy-focused tool for developers.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0d1117; --card: #161b22; --accent: #58a6ff;
+            --text: #c9d1d9; --success: #3fb950; --border: #30363d;
+            --error: #f85149; --warning: #d29922;
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--text);
+            display: flex; flex-direction: column; min-height: 100vh;
+        }
+
+        .nav { background: var(--card); padding: 1rem 5%; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .logo { color: var(--accent); font-weight: 600; font-size: 1.2rem; text-decoration: none; }
+
+        .wrapper { 
+            display: flex; 
+            gap: 20px; 
+            padding: 20px 5%; 
+            flex: 1; 
+            display: flex; gap: 20px; padding: 20px 5%; flex: 1; 
+        }
+
+        .tool-area { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        .ad-sidebar { 
+            width: 300px; 
+            min-height: 600px;
+            background: var(--card); 
+            border-radius: 12px; 
+            border: 1px dashed #484f58;
+            display: flex; align-items: center; justify-content: center;
+            color: #484f58; font-size: 0.8rem;
+            position: sticky; top: 20px;
+            width: 300px; min-height: 600px; background: var(--card); border-radius: 12px; border: 1px dashed #484f58;
+            display: flex; align-items: center; justify-content: center; color: #484f58; font-size: 0.8rem; position: sticky; top: 20px;
+        }
+
+        .editor-box { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; transition: opacity 0.3s ease; }
+        .editor-box { background: var(--card); border-radius: 12px; border: 1px solid var(--border); overflow: hidden; }
+        .toolbar { background: #21262d; padding: 10px 15px; display: flex; gap: 10px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+
+        textarea { 
+            width: 100%; height: 350px; background: transparent; color: #8b949e; 
+            border: none; padding: 15px; font-family: 'Fira Code', monospace; 
+            font-size: 14px; outline: none; resize: vertical; box-sizing: border-box;
+        }
+
+        .output-panel { 
+            background: #010409; padding: 20px; min-height: 200px; 
+            border-top: 1px solid var(--border); position: relative;
+            overflow-x: auto;
+        }
+        .output-panel { background: #010409; padding: 20px; min-height: 200px; border-top: 1px solid var(--border); position: relative; overflow-x: auto; }
+
+        #out {
+            font-family: 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            color: var(--success);
+            white-space: pre;
+            tab-size: 4;
+            margin: 0;
+        }
+        #out { font-family: 'Fira Code', monospace; font-size: 14px; line-height: 1.5; color: var(--success); white-space: pre; tab-size: 4; margin: 0; }
+
+        button { background: var(--accent); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.sec { background: #30363d; color: var(--text); }
+
+        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; z-index: 10; }
+        .repair-note { font-size: 0.75rem; color: var(--warning); margin-top: 5px; display: none; }
+
+        @media (max-width: 1024px) {
+            .wrapper { flex-direction: column; }
+            .ad-sidebar { width: 100%; height: 250px; min-height: 250px; order: 2; position: static; }
+            .tool-area { order: 1; }
+        }
+        .toast { position: absolute; top: 10px; right: 10px; background: var(--success); color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; display: none; }
+        .repair-note { font-size: 0.75rem; color: var(--warning); margin-bottom: 10px; display: none; padding: 8px; background: rgba(210, 153, 34, 0.1); border-radius: 4px; }
+
+        footer { padding: 40px 5%; background: var(--card); border-top: 1px solid var(--border); margin-top: 20px; line-height: 1.6; }
+    </style>
+</head>
+<body>
+
+<div class="nav">
+    <a href="#" class="logo">JSON MAGIC ✨</a>
+</div>
+<div class="nav"><a href="#" class="logo">JSON MAGIC ✨</a></div>
+
+<div class="wrapper">
+    <main class="tool-area">
+        <div class="editor-box" id="main-editor">
+            <div class="toolbar">
+                <button onclick="formatJSON(true)">Beautify</button>
+                <button class="sec" onclick="formatJSON(false)">Minify</button>
+                <button class="sec" onclick="loadSample()">Sample</button>
+                <button class="sec" onclick="loadSample()">Sample Error</button>
+                <button class="sec" onclick="copyCode()">Copy Code</button>
+                <button class="sec" onclick="clearAll()">Clear</button>
+            </div>
+            <textarea id="in" placeholder="Paste messy JSON here..."></textarea>
+            <textarea id="in" placeholder="Paste messy or broken JSON here..."></textarea>
+            <div class="output-panel">
+                <div class="toast" id="t">Copied!</div>
+                <div id="repair-msg" class="repair-note">✨ Auto-repaired control characters</div>
+                <div id="repair-msg" class="repair-note">⚠️ Auto-repaired structure (Missing colons or quotes fixed)</div>
+                <pre id="out">// Formatted output will appear here...</pre>
+            </div>
+        </div>
+        
+        <div style="width:100%; height:90px; border:1px dashed #484f58; display:flex; align-items:center; justify-content:center; color:#484f58; border-radius:8px; font-size: 0.8rem;">
+            --- HORIZONTAL AD ZONE (728x90) ---
+        </div>
+    </main>
+
+    <aside class="ad-sidebar">
+        <div style="text-align: center;">
+            ADVERTISEMENT<br>
+            <small>(300x600 Skyscraper)</small>
+        </div>
+        <div>ADVERTISEMENT</div>
+    </aside>
+</div>
+
+<footer>
+    <h3>Why use JSON Magic?</h3>
+    <p>Safe, client-side processing. Your data never leaves your browser, making it ideal for API responses and sensitive configurations. We automatically handle common formatting errors and hidden characters.</p>
+    <p style="opacity: 0.6; font-size: 0.8rem;">&copy; 2026 Developer Utility Tools. Built for speed and privacy.</p>
+</footer>
+
 <script>
-// Wait for the DOM to be ready to avoid "Cannot read properties of null"
-document.addEventListener('DOMContentLoaded', () => {
     let debounceTimer;
 
-    // 🔥 1. ADVANCED HEALER (handles structural + syntax issues)
-    function absoluteHealer(str) {
-        let s = str.trim();
+    function superRepair(str) {
+        let fixed = str.trim();
+        
+        // 1. Fix single quotes to double quotes
+        fixed = fixed.replace(/'/g, '"');
 
-        // Normalize spaces, curly quotes, and control chars
-        s = s.replace(/[\u00A0-\u3000\ufeff]/g, " ");
-        s = s.replace(/[\u201C\u201D]/g, '"'); 
-        s = s.replace(/'/g, '"');
-        s = s.replace(/[\x00-\x1F]+/g, "");
+        // 2. Fix missing colons between keys and values
+        // Looks for "key" "value" and adds the :
+        fixed = fixed.replace(/("[\w]+")\s*("[\w]+"|\d+|true|false|null|{|\[)/g, '$1: $2');
 
-        // Quote keys
-        s = s.replace(/([{,]\s*)([a-zA-Z0-9._-]+)\s*:/g, '$1"$2":');
+        // 3. Fix missing quotes around keys (if simple alphanumeric)
+        fixed = fixed.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
 
-        // Fix missing colons
-        s = s.replace(/(")\s+(?="|\d|true|false|null|\[|\{)/g, '$1: ');
+        // 4. Remove trailing commas
+        fixed = fixed.replace(/,\s*([\]}])/g, '$1');
 
-        // Fix duplicate commas
-        s = s.replace(/,+/g, ',');
+        // 5. Clean up bad control characters
+        fixed = fixed.replace(/\n/g, "\\n").replace(/\r/g, "\\r").replace(/\t/g, "\\t");
 
-        // Fix missing commas between values
-        s = s.replace(/("|\d|true|false|null|\}|\])\s+(?="|\d|true|false|null|\[|\{)/g, '$1, ');
-
-        // Remove trailing commas
-        s = s.replace(/,\s*([\]}])/g, '$1');
-
-        // --- STRUCTURE REPAIR (stack-based) ---
-        let stack = [];
-        let result = '';
-
-        for (let i = 0; i < s.length; i++) {
-            let char = s[i];
-
-            if (char === '{' || char === '[') {
-                stack.push(char);
-                result += char;
-            } 
-            else if (char === '}' || char === ']') {
-                const last = stack[stack.length - 1];
-                if ((char === '}' && last === '{') || (char === ']' && last === '[')) {
-                    stack.pop();
-                    result += char;
-                }
-                // ignore extra/mismatched closing brackets
-            } 
-            else {
-                result += char;
-            }
-        }
-
-        // Auto-close missing structures
-        while (stack.length) {
-            let last = stack.pop();
-            result += (last === '{') ? '}' : ']';
-        }
-
-        // Wrap if not valid root
-        if (!result.trim().startsWith('{') && !result.trim().startsWith('[')) {
-            result = '{' + result + '}';
-        }
-
-        return result;
+        return fixed;
     }
 
-    // 🔠 2. SORT OBJECT KEYS
-    function sortObject(obj) {
-        if (Array.isArray(obj)) return obj.map(sortObject);
-        if (obj === null || typeof obj !== 'object') return obj;
-
-        return Object.keys(obj).sort().reduce((acc, key) => {
-            acc[key] = sortObject(obj[key]);
-            return acc;
-        }, {});
-    }
-
-    // ⚙️ 3. MAIN FORMAT FUNCTION
-    function formatJSON() {
-        const inputEl = document.getElementById('in');
+    function formatJSON(beautify = true) {
+        let input = document.getElementById('in').value;
         const out = document.getElementById('out');
         const repairMsg = document.getElementById('repair-msg');
 
-        if (!inputEl || !inputEl.value.trim()) return;
+        if(!input.trim()) return;
+
+        repairMsg.style.display = "none";
+        out.style.color = "#8b949e";
+        out.textContent = "Processing...";
 
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             try {
-                let processedData;
-                let wasRepaired = false;
-                const inputVal = inputEl.value;
-
+                // STAGE 1: Attempt standard parse
+                let parsed;
+                // Try standard first
+                let parsed = JSON.parse(input);
+                render(parsed, beautify);
+            } catch (e) {
+                // If fails, run the Super Repair
                 try {
-                    // Try normal parse first
-                    processedData = JSON.parse(inputVal);
+                    parsed = JSON.parse(input);
                 } catch (e) {
-                    // Apply repair
-                    const healed = absoluteHealer(inputVal);
-                    processedData = JSON.parse(healed);
-                    wasRepaired = true;
+                    // STAGE 2: Auto-Repair common "Control Character" errors
+                    // This regex finds unescaped newlines, tabs, and carriage returns
+                    // specifically within string values and fixes them.
+                    const repairedInput = input
+                        .replace(/\n/g, "\\n")
+                        .replace(/\r/g, "\\r")
+                        .replace(/\t/g, "\\t");
+                    
+                    parsed = JSON.parse(repairedInput);
+                    repairMsg.style.display = "block"; // Notify user we fixed it
+                    let repaired = superRepair(input);
+                    let parsed = JSON.parse(repaired);
+                    repairMsg.style.display = "block";
+                    render(parsed, beautify);
+                } catch (finalError) {
+                    out.textContent = "Error: " + finalError.message;
+                    out.style.color = "var(--error)";
                 }
 
-                const organizedData = sortObject(processedData);
-
-                if (repairMsg) {
-                    repairMsg.style.display = wasRepaired ? "block" : "none";
-                }
-
-                render(organizedData, wasRepaired);
-
+                const result = beautify ? JSON.stringify(parsed, null, 4) : JSON.stringify(parsed);
+                
+                out.textContent = result;
+                out.style.color = "var(--success)";
+                out.style.opacity = "1";
             } catch (finalError) {
-                if (out) {
-                    out.innerHTML = `<span style="color:crimson">
-                        Unrepairable structural error: ${finalError.message}
-                    </span>`;
-                }
+                out.textContent = "Invalid JSON: " + finalError.message;
+                out.style.color = "var(--error)";
+                repairMsg.style.display = "none";
             }
-        }, 150);
+        }, 200);
     }
 
-    // 🎨 4. RENDER WITH HIGHLIGHT
-    function render(data, wasRepaired) {
+    function render(data, beautify) {
         const out = document.getElementById('out');
-        const jsonString = JSON.stringify(data, null, 4);
-
-        const highlighted = jsonString
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/(".*?"|\btrue\b|\bfalse\b|\bnull\b|\d+)/g, (match) => {
-                // If it was repaired, we highlight everything new/fixed
-                const style = wasRepaired 
-                    ? `background:#23863644; color:#79c0ff; border-radius:2px;` 
-                    : `color:#79c0ff;`;
-                return `<span style="${style}">${match}</span>`;
-            });
-
-        if (out) {
-            out.innerHTML = `<pre style="white-space:pre-wrap; word-wrap:break-word;">${highlighted}</pre>`;
-        }
+        out.textContent = beautify ? JSON.stringify(data, null, 4) : JSON.stringify(data);
+        out.style.color = "var(--success)";
+        out.style.opacity = "1";
     }
 
-    // ⌨️ INITIALIZE EVENT LISTENER
-    const inputArea = document.getElementById('in');
-    if (inputArea) {
-        inputArea.addEventListener('input', formatJSON);
+    function loadSample() {
+        const sample = {
+            status: "success",
+            message: "Hello World!\nThis string has a newline character.",
+            data: {
+                id: 101,
+                items: ["item1", "item2"],
+                nested: true
+            }
+        };
+        document.getElementById('in').value = JSON.stringify(sample);
+        // Sample with missing colon AND bad quotes
+        const broken = `{
+    "name" "JSON Magic"
+    'version' 2.1,
+    "feature": "Self Healing"
+}`;
+        document.getElementById('in').value = broken;
+        formatJSON(true);
     }
-});
+
+    function copyCode() {
+        const out = document.getElementById('out');
+        const txt = out.textContent;
+        
+        if(txt.startsWith("//") || txt.startsWith("Invalid")) return;
+        
+        const txt = document.getElementById('out').textContent;
+        if(txt.includes("//") || txt.startsWith("Error")) return;
+        navigator.clipboard.writeText(txt).then(() => {
+            const toast = document.getElementById('t');
+            toast.style.display = "block";
+            setTimeout(() => { toast.style.display = "none"; }, 2000);
+        });
+    }
+
+    function clearAll() {
+        const editor = document.getElementById('main-editor');
+        const input = document.getElementById('in');
+        const out = document.getElementById('out');
+        document.getElementById('in').value = "";
+        document.getElementById('out').textContent = "// Formatted output will appear here...";
+        document.getElementById('repair-msg').style.display = "none";
+
+        editor.style.opacity = "0.5";
+        setTimeout(() => {
+            input.value = "";
+            out.textContent = "// Formatted output will appear here...";
+            out.style.color = "var(--success)";
+            out.style.opacity = "0.5";
+            editor.style.opacity = "1";
+        }, 200);
+    }
 </script>
+
+</body>
+</html>
